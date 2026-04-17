@@ -21,12 +21,12 @@ class AsistenteDiagnostico:
 
     def obtener_componentes(self, dispositivo):
         if not self.df.empty:
-            # Filtramos para que solo aparezcan componentes de ESE dispositivo
+            # Filtramos para que solo aparezcan componentes de x dispositivo
             filtrado = self.df[self.df["Dispositivo"] == dispositivo]
             return ["No lo sé / Otros"] + list(filtrado["Componente"].unique())
         return ["No lo sé / Otros"]
 
-    # --- CORRECCIÓN AQUÍ: Ahora recibe 'dispositivo' para filtrar ---
+
     def buscar_por_sintomas(self, busqueda, dispositivo):
         # 1. Filtramos la base de datos solo por el dispositivo seleccionado
         df_dispositivo = self.df[self.df["Dispositivo"] == dispositivo]
@@ -37,7 +37,7 @@ class AsistenteDiagnostico:
     def buscar_diagnostico_exacto(self, dispositivo, componente):
         return self.df[(self.df["Dispositivo"] == dispositivo) & (self.df["Componente"] == componente)]
 
-# --- INTERFAZ ---
+#  INTERFAZ 
 st.set_page_config(page_title="Asistente de Diagnóstico Tech", layout="wide")
 st.title("🛠️ Sistema de Diagnóstico Técnico")
 
@@ -57,7 +57,7 @@ if not asistente.df.empty:
             busqueda = st.text_input("Describe los síntomas:")
             
             if busqueda:
-                # LLAMADA CORREGIDA: Pasamos el dispositivo seleccionado
+                # LLAMADA : Pasamos el dispositivo seleccionado
                 resultado = asistente.buscar_por_sintomas(busqueda, dispositivo_sel)
                 
                 if not resultado.empty:
