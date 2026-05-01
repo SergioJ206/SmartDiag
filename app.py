@@ -39,7 +39,8 @@ class AsistenteDiagnostico:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
             
             # 2. Elegir el modelo de IA
-            modelo = genai.GenerativeModel('gemini-1.5-flash')
+            # CÓDIGO CORREGIDO
+            modelo = genai.GenerativeModel('gemini-pro')
             
             # 3. Preparar el "Contexto" (Solo la tabla de ese dispositivo)
             df_filtrado = self.df[self.df["Dispositivo"] == dispositivo]
