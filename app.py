@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 
-# ==========================================
-# 1. DEFINICIÓN DE LA CLASE (POO)
-# ==========================================
+
+# 1. DEFINICIÓN DE LA CLASE
+
 class AsistenteDiagnostico:
     def __init__(self, ruta_archivo):
         self.ruta_archivo = ruta_archivo
@@ -32,15 +32,17 @@ class AsistenteDiagnostico:
     def buscar_diagnostico_exacto(self, dispositivo, componente):
         return self.df[(self.df["Dispositivo"] == dispositivo) & (self.df["Componente"] == componente)]
 
-    # --- NUEVO MÉTODO: EL CEREBRO DE LA IA ---
+    #IA ---
     def analizar_con_ia(self, busqueda, dispositivo):
         try:
             # 1. Configurar la IA con la llave secreta
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
             
             # 2. Elegir el modelo de IA
-            # CÓDIGO CORREGIDO
-            # CÓDIGO CORREGIDO
+            # M.1
+            # M.2
+            # M.3
+            # M.4
             modelo = genai.GenerativeModel('gemini-2.5-flash')
             
             # 3. Preparar el "Contexto" (Solo la tabla de ese dispositivo)
@@ -73,9 +75,9 @@ class AsistenteDiagnostico:
             return f"Hubo un error de conexión con la Inteligencia Artificial: {e}"
 
 
-# ==========================================
+
 # 2. INTERFAZ DE USUARIO (STREAMLIT)
-# ==========================================
+
 st.set_page_config(page_title="Asistente de Diagnóstico Tech", layout="wide")
 st.title("🤖 Sistema de Diagnóstico Inteligente")
 
@@ -94,7 +96,7 @@ if not asistente.df.empty:
             st.subheader(f"Dime qué le pasa a tu {dispositivo_sel}")
             busqueda = st.text_area("Describe los síntomas con tus propias palabras (ej. 'La pantalla se pone azul y se reinicia sola'):")
             
-            # --- NUEVA INTEGRACIÓN VISUAL DE LA IA ---
+            # INTEGRACIÓN VISUAL DE LA IA ---
             if st.button("Analizar con Inteligencia Artificial ✨"):
                 if busqueda:
                     with st.spinner("La IA está leyendo tu queja y analizando la base de datos..."):
