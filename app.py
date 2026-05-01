@@ -1,6 +1,10 @@
 import streamlit as st
 import pandas as pd
+import google.generativeai as genai
 
+# ==========================================
+# 1. DEFINICIÓN DE LA CLASE (POO)
+# ==========================================
 class AsistenteDiagnostico:
     def __init__(self, ruta_archivo):
         self.ruta_archivo = ruta_archivo
@@ -21,25 +25,57 @@ class AsistenteDiagnostico:
 
     def obtener_componentes(self, dispositivo):
         if not self.df.empty:
-            # Filtramos para que solo aparezcan componentes de x dispositivo
             filtrado = self.df[self.df["Dispositivo"] == dispositivo]
             return ["No lo sé / Otros"] + list(filtrado["Componente"].unique())
         return ["No lo sé / Otros"]
 
-
-    def buscar_por_sintomas(self, busqueda, dispositivo):
-        # 1. Filtramos la base de datos solo por el dispositivo seleccionado
-        df_dispositivo = self.df[self.df["Dispositivo"] == dispositivo]
-        
-        # 2. Buscamos el síntoma solo dentro de ese grupo
-        return df_dispositivo[df_dispositivo['Sintomas'].str.contains(busqueda, case=False, na=False)]
-
     def buscar_diagnostico_exacto(self, dispositivo, componente):
         return self.df[(self.df["Dispositivo"] == dispositivo) & (self.df["Componente"] == componente)]
 
-#  INTERFAZ 
+    # --- NUEVO MÉTODO: EL CEREBRO DE LA IA ---
+    def analizar_con_ia(self, busqueda, dispositivo):
+        try:
+            # 1. Configurar la IA con la llave secreta
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            
+            # 2. Elegir el modelo de IA
+            modelo = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # 3. Preparar el "Contexto" (Solo la tabla de ese dispositivo)
+            df_filtrado = self.df[self.df["Dispositivo"] == dispositivo]
+            # Convertimos la tabla a texto para que la IA la pueda leer
+            contexto_datos = df_filtrado.to_string(index=False)
+            
+            # 4. Diseñar el Prompt Maestro
+            prompt = f"""
+            Eres un técnico de soporte experto, empático y claro.
+            Tu objetivo es diagnosticar el problema del usuario basándote ÚNICAMENTE en la siguiente base de datos:
+            
+            {contexto_datos}
+            
+            El usuario tiene un {dispositivo} y reporta los siguientes síntomas: "{busqueda}"
+            
+            Instrucciones:
+            1. Analiza los síntomas y busca la fila que mejor coincida en la base de datos.
+            2. Si encuentras la falla, respóndele al usuario de manera conversacional y amable.
+            3. Menciona el Problema, la Causa técnica, y explícale la Solución paso a paso según la base de datos.
+            4. Si la Acción sugerida dice que necesita un técnico, adviérteselo amablemente.
+            5. Si los síntomas del usuario NO tienen relación con nada de la base de datos, dile que por ahora no tienes información sobre ese problema específico y recomiéndale ir a soporte técnico.
+            """
+            
+            # 5. Generar la respuesta
+            respuesta = modelo.generate_content(prompt)
+            return respuesta.text
+            
+        except Exception as e:
+            return f"Hubo un error de conexión con la Inteligencia Artificial: {e}"
+
+
+# ==========================================
+# 2. INTERFAZ DE USUARIO (STREAMLIT)
+# ==========================================
 st.set_page_config(page_title="Asistente de Diagnóstico Tech", layout="wide")
-st.title("🛠️ Sistema de Diagnóstico Técnico")
+st.title("🤖 Sistema de Diagnóstico Inteligente")
 
 asistente = AsistenteDiagnostico("data/base_mantenimiento.csv")
 
@@ -54,29 +90,28 @@ if not asistente.df.empty:
     with col2:
         if componente_sel == "No lo sé / Otros":
             st.subheader(f"Dime qué le pasa a tu {dispositivo_sel}")
-            busqueda = st.text_input("Describe los síntomas:")
+            busqueda = st.text_area("Describe los síntomas con tus propias palabras (ej. 'La pantalla se pone azul y se reinicia sola'):")
             
-            if busqueda:
-                # LLAMADA : Pasamos el dispositivo seleccionado
-                resultado = asistente.buscar_por_sintomas(busqueda, dispositivo_sel)
-                
-                if not resultado.empty:
-                    st.success(f"Coincidencias encontradas para {dispositivo_sel}:")
-                    for i, row in resultado.iterrows():
-                        with st.expander(f"🚩 Problema: {row['Problema']}"):
-                            st.warning(f"**Causa:** {row['Causa_tecnica']}")
-                            st.info(f"**Solución:** {row['Solucion']}")
-                            if 'Link_tutorial' in row and pd.notnull(row['Link_tutorial']):
-                                st.link_button("Ver Tutorial", row['Link_tutorial'])
+            # --- NUEVA INTEGRACIÓN VISUAL DE LA IA ---
+            if st.button("Analizar con Inteligencia Artificial ✨"):
+                if busqueda:
+                    with st.spinner("La IA está leyendo tu queja y analizando la base de datos..."):
+                        # Llamamos a nuestro nuevo método
+                        respuesta_ia = asistente.analizar_con_ia(busqueda, dispositivo_sel)
+                        
+                        st.success("Análisis completado:")
+                        st.markdown(respuesta_ia)
                 else:
-                    st.error(f"No encontré fallas de '{dispositivo_sel}' con esos síntomas.")
+                    st.warning("Por favor, escribe un síntoma antes de analizar.")
         
         else:
-            # Búsqueda directa por componente
+            # Búsqueda exacta (Sigue igual, no necesita IA porque el usuario ya sabe qué es)
             resultado = asistente.buscar_diagnostico_exacto(dispositivo_sel, componente_sel)
             for i, row in resultado.iterrows():
-                st.subheader(f"Diagnóstico: {row['Problema']}")
+                st.subheader(f"Diagnóstico para: {row['Problema']}")
                 st.warning(f"**Causa:** {row['Causa_tecnica']}")
                 st.info(f"**Solución:** {row['Solucion']}")
                 if 'Link_tutorial' in row and pd.notnull(row['Link_tutorial']):
                     st.link_button("Ver Tutorial", row['Link_tutorial'])
+else:
+    st.error("No se pudo iniciar el asistente porque no se encontró la base de datos.")
