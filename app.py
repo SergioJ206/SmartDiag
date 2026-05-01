@@ -81,6 +81,11 @@ class AsistenteDiagnostico:
 st.set_page_config(page_title="Asistente de Diagnóstico Tech", layout="wide")
 st.title("🤖 Sistema de Diagnóstico Inteligente")
 
+# BOTÓN PARA LIMPIAR CACHÉ ---
+if st.button("🔄 Sincronizar Base de Datos"):
+    st.cache_data.clear()
+    st.rerun() # Fuerza a la página a recargarse con los datos limpios
+
 asistente = AsistenteDiagnostico("data/base_mantenimiento.csv")
 
 if not asistente.df.empty:
