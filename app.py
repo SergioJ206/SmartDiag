@@ -41,7 +41,7 @@ class AsistenteDiagnostico:
             # 2. Elegir el modelo de IA
             # CÓDIGO CORREGIDO
             # CÓDIGO CORREGIDO
-modelo = genai.GenerativeModel('gemini-2.5-flash')
+            modelo = genai.GenerativeModel('gemini-2.5-flash')
             
             # 3. Preparar el "Contexto" (Solo la tabla de ese dispositivo)
             df_filtrado = self.df[self.df["Dispositivo"] == dispositivo]
